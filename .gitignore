@@ -1,0 +1,10 @@
+node_modules
+dist
+client/dist
+server/listings.db
+server/listings.db-journal
+server/listings.db-wal
+server/listings.db-shm
+.DS_Store
+*.log
+.claude/settings.local.json
