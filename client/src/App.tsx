@@ -34,6 +34,8 @@ function App() {
   const sorted = useMemo(() => {
     const copy = [...listings];
     copy.sort((a, b) => {
+      // Always push unavailable listings to the bottom
+      if (a.unavailable !== b.unavailable) return a.unavailable ? 1 : -1;
       const av = a[sortField];
       const bv = b[sortField];
       // Push nulls to the end regardless of direction
@@ -113,6 +115,15 @@ function App() {
     }
   }
 
+  async function handleToggleUnavailable(id: number, next: boolean) {
+    try {
+      const updated = await api.setListingUnavailable(id, next);
+      setListings((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
   async function handleMove(id: number, direction: 'up' | 'down') {
     try {
       const updated = await api.moveListing(id, direction);
@@ -172,6 +183,7 @@ function App() {
               onDelete={handleDelete}
               onMove={handleMove}
               onEdit={setEditing}
+              onToggleUnavailable={handleToggleUnavailable}
             />
           )}
         </div>

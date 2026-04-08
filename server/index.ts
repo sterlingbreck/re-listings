@@ -59,7 +59,8 @@ app.post('/api/listings', (req, res) => {
 app.put('/api/listings/:id', (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: 'invalid id' });
-  const { thumbnail, price, address, city, bedrooms, bathrooms, comments } = req.body ?? {};
+  const { thumbnail, price, address, city, bedrooms, bathrooms, comments, unavailable } =
+    req.body ?? {};
   const updated = updateListing(id, {
     thumbnail: thumbnail !== undefined ? thumbnail || null : undefined,
     price:
@@ -83,6 +84,7 @@ app.put('/api/listings/:id', (req, res) => {
           ? null
           : Number(bathrooms),
     comments: comments !== undefined ? comments || null : undefined,
+    unavailable: unavailable !== undefined ? Boolean(unavailable) : undefined,
   });
   if (!updated) return res.status(404).json({ error: 'not found' });
   res.json(updated);

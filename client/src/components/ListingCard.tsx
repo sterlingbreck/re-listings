@@ -6,6 +6,7 @@ interface Props {
   onDelete: (id: number) => void;
   onMove: (id: number, direction: 'up' | 'down') => void;
   onEdit: (listing: Listing) => void;
+  onToggleUnavailable: (id: number, next: boolean) => void;
   isFirst: boolean;
   isLast: boolean;
 }
@@ -27,9 +28,24 @@ function formatBaths(n: number | null): string {
   return `${n % 1 === 0 ? n : n.toFixed(1)} ba`;
 }
 
-export function ListingCard({ listing, position, onDelete, onMove, onEdit, isFirst, isLast }: Props) {
+export function ListingCard({
+  listing,
+  position,
+  onDelete,
+  onMove,
+  onEdit,
+  onToggleUnavailable,
+  isFirst,
+  isLast,
+}: Props) {
   return (
-    <article className="group flex flex-col overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-orange-500 hover:shadow-lg">
+    <article
+      className={`group flex flex-col overflow-hidden rounded-xl border shadow-sm transition ${
+        listing.unavailable
+          ? 'border-neutral-300 bg-neutral-200 opacity-60 grayscale'
+          : 'border-black/10 bg-white hover:-translate-y-0.5 hover:border-orange-500 hover:shadow-lg'
+      }`}
+    >
       <div className="flex">
       {/* Rank controls */}
       <div className="flex flex-col items-center justify-center gap-1 border-r border-black/5 bg-neutral-50 px-1 py-2 sm:px-2">
@@ -109,13 +125,36 @@ export function ListingCard({ listing, position, onDelete, onMove, onEdit, isFir
               View listing →
             </a>
           </div>
+          {listing.comments && (
+            <div className="mt-2 rounded-md border border-black/5 bg-neutral-50/60 px-2 py-1.5">
+              <div className="mb-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-600">
+                OUR COMMENTS
+              </div>
+              <p className="whitespace-pre-wrap text-xs text-neutral-700 sm:text-sm">
+                {listing.comments}
+              </p>
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col items-end gap-1">
+          <button
+            type="button"
+            onClick={() => onToggleUnavailable(listing.id, !listing.unavailable)}
+            className={`whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold transition ${
+              listing.unavailable
+                ? 'border border-green-600 text-green-700 hover:bg-green-50'
+                : 'bg-red-600 text-white hover:bg-red-700'
+            }`}
+            aria-label={listing.unavailable ? 'Mark as available' : 'Mark as unavailable'}
+            title={listing.unavailable ? 'Mark as available' : 'Mark as unavailable'}
+          >
+            {listing.unavailable ? 'Mark Available' : 'Mark Unavailable'}
+          </button>
           <button
             type="button"
             onClick={() => onEdit(listing)}
-            className="rounded-md p-1 text-neutral-400 transition hover:bg-orange-50 hover:text-orange-600"
+            className="rounded-md p-1 text-green-600 transition hover:bg-green-50 hover:text-green-700"
             aria-label="Edit listing"
             title="Edit listing"
           >
@@ -126,7 +165,7 @@ export function ListingCard({ listing, position, onDelete, onMove, onEdit, isFir
           <button
             type="button"
             onClick={() => onDelete(listing.id)}
-            className="rounded-md p-1 text-neutral-300 transition hover:bg-red-50 hover:text-red-600"
+            className="rounded-md p-1 text-red-600 transition hover:bg-red-50 hover:text-red-700"
             aria-label="Delete listing"
             title="Delete listing"
           >
@@ -137,16 +176,6 @@ export function ListingCard({ listing, position, onDelete, onMove, onEdit, isFir
         </div>
       </div>
       </div>
-      {listing.comments && (
-        <div className="border-t border-black/5 bg-neutral-50/60 px-3 py-2 sm:px-4">
-          <div className="mb-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-600">
-            OUR COMMENTS
-          </div>
-          <p className="whitespace-pre-wrap text-xs text-neutral-700 sm:text-sm">
-            {listing.comments}
-          </p>
-        </div>
-      )}
     </article>
   );
 }

@@ -9,6 +9,7 @@ export interface Listing {
   bathrooms: number | null;
   comments: string | null;
   rank: number;
+  unavailable: boolean;
   created_at: number;
 }
 

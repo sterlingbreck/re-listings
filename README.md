@@ -6,9 +6,10 @@ A local web application for tracking real estate listings you're interested in. 
 
 - **Add by URL** — paste a listing URL, the app fetches the page and extracts details automatically
 - **Manual fallback** — if a site blocks scraping or returns partial data, a modal opens pre-filled with whatever was extracted so you can complete the listing by hand
-- **Scrollable list view** — thumbnail, price, address, city, bedrooms, and a "View original listing" link on every card
-- **Sort** by price or bedrooms, ascending or descending
-- **Delete** any listing with one click
+- **Scrollable list view** — thumbnail, price, address, city, bedrooms, bathrooms, comments, and a "View listing" link on every card. Comments render inline beneath the bed/bath chips, to the right of the thumbnail.
+- **Sort** by rank, price, bedrooms, or bathrooms, ascending or descending
+- **Mark Unavailable / Mark Available** — toggle a listing's availability with the red/green button on each card. Unavailable listings are visually greyed out and automatically pinned to the bottom of the list, regardless of the active sort. State persists in the database.
+- **Edit** (green pencil icon) and **Delete** (red trash icon) any listing with one click
 - **Local SQLite storage** — listings persist across restarts in `server/listings.db`
 - **Responsive design** with Tailwind CSS:
   - **Mobile** (<640px): full-width cards, thumbnail on top
@@ -68,16 +69,20 @@ curl -s http://localhost:3001/api/listings | jq
 
 ### Schema
 
-| column     | type    | notes                          |
-|------------|---------|--------------------------------|
-| id         | INTEGER | primary key, autoincrement     |
-| url        | TEXT    | original listing URL, unique   |
-| thumbnail  | TEXT    | first image URL from listing   |
-| price      | INTEGER | dollars, nullable              |
-| address    | TEXT    | street address                 |
-| city       | TEXT    |                                |
-| bedrooms   | REAL    | supports half beds (e.g. 1.5)  |
-| created_at | INTEGER | unix milliseconds              |
+| column      | type    | notes                                              |
+|-------------|---------|----------------------------------------------------|
+| id          | INTEGER | primary key, autoincrement                         |
+| url         | TEXT    | original listing URL, unique                       |
+| thumbnail   | TEXT    | first image URL from listing                       |
+| price       | INTEGER | dollars, nullable                                  |
+| address     | TEXT    | street address                                     |
+| city        | TEXT    |                                                    |
+| bedrooms    | REAL    | supports half beds (e.g. 1.5)                      |
+| bathrooms   | REAL    | supports half baths                                |
+| comments    | TEXT    | freeform notes shown inline on the card            |
+| rank        | INTEGER | manual sort order (move up/down)                   |
+| unavailable | INTEGER | 0 or 1; unavailable listings sort to the bottom    |
+| created_at  | INTEGER | unix milliseconds                                  |
 
 ## Project Structure
 
@@ -103,12 +108,14 @@ RE-listings/
 
 ## API
 
-| Method | Path                  | Description                                         |
-|--------|-----------------------|-----------------------------------------------------|
-| GET    | `/api/listings`       | Returns all saved listings                          |
-| POST   | `/api/scrape`         | Body `{ url }` — fetches and parses, does not save  |
-| POST   | `/api/listings`       | Saves a listing (used after scrape or manual entry) |
-| DELETE | `/api/listings/:id`   | Removes a listing                                   |
+| Method | Path                       | Description                                                                    |
+|--------|----------------------------|--------------------------------------------------------------------------------|
+| GET    | `/api/listings`            | Returns all saved listings (unavailable rows ordered last)                     |
+| POST   | `/api/scrape`              | Body `{ url }` — fetches and parses, does not save                             |
+| POST   | `/api/listings`            | Saves a listing (used after scrape or manual entry)                            |
+| PUT    | `/api/listings/:id`        | Updates any subset of listing fields, including `unavailable` (boolean toggle) |
+| POST   | `/api/listings/:id/move`   | Body `{ direction: "up" \| "down" }` — swaps rank with neighbor                |
+| DELETE | `/api/listings/:id`        | Removes a listing                                                              |
 
 The Vite dev server proxies `/api/*` → `http://localhost:3001`, so the frontend can call relative URLs.
 

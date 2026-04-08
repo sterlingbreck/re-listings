@@ -6,9 +6,10 @@ interface Props {
   onDelete: (id: number) => void;
   onMove: (id: number, direction: 'up' | 'down') => void;
   onEdit: (listing: Listing) => void;
+  onToggleUnavailable: (id: number, next: boolean) => void;
 }
 
-export function ListingList({ listings, onDelete, onMove, onEdit }: Props) {
+export function ListingList({ listings, onDelete, onMove, onEdit, onToggleUnavailable }: Props) {
   if (listings.length === 0) {
     return (
       <div className="rounded-xl border-2 border-dashed border-black/10 bg-white/60 p-10 text-center">
@@ -26,6 +27,7 @@ export function ListingList({ listings, onDelete, onMove, onEdit }: Props) {
             onDelete={onDelete}
             onMove={onMove}
             onEdit={onEdit}
+            onToggleUnavailable={onToggleUnavailable}
             isFirst={i === 0}
             isLast={i === listings.length - 1}
           />

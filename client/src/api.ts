@@ -1,9 +1,14 @@
 import type { Listing, ScrapeResult } from './types';
 
+function normalizeListing(l: any): Listing {
+  return { ...l, unavailable: Boolean(l.unavailable) };
+}
+
 export async function fetchListings(): Promise<Listing[]> {
   const res = await fetch('/api/listings');
   if (!res.ok) throw new Error(`Failed to load listings (${res.status})`);
-  return res.json();
+  const body = await res.json();
+  return (body as any[]).map(normalizeListing);
 }
 
 export async function scrapeUrl(url: string): Promise<ScrapeResult> {
@@ -38,7 +43,7 @@ export async function createListing(payload: {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error ?? `Save failed (${res.status})`);
   }
-  return res.json();
+  return normalizeListing(await res.json());
 }
 
 export async function updateListing(
@@ -62,7 +67,20 @@ export async function updateListing(
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error ?? `Update failed (${res.status})`);
   }
-  return res.json();
+  return normalizeListing(await res.json());
+}
+
+export async function setListingUnavailable(id: number, unavailable: boolean): Promise<Listing> {
+  const res = await fetch(`/api/listings/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ unavailable }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? `Update failed (${res.status})`);
+  }
+  return normalizeListing(await res.json());
 }
 
 export async function deleteListing(id: number): Promise<void> {
@@ -80,5 +98,5 @@ export async function moveListing(id: number, direction: 'up' | 'down'): Promise
   });
   if (!res.ok) throw new Error(`Move failed (${res.status})`);
   const body = await res.json();
-  return body.listings as Listing[];
+  return (body.listings as any[]).map(normalizeListing);
 }

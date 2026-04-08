@@ -20,6 +20,7 @@ db.exec(`
     bathrooms REAL,
     comments TEXT,
     rank INTEGER NOT NULL DEFAULT 0,
+    unavailable INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL
   );
 `);
@@ -36,6 +37,7 @@ function addColumnIfMissing(sql: string) {
 addColumnIfMissing(`ALTER TABLE listings ADD COLUMN bathrooms REAL`);
 addColumnIfMissing(`ALTER TABLE listings ADD COLUMN "rank" INTEGER NOT NULL DEFAULT 0`);
 addColumnIfMissing(`ALTER TABLE listings ADD COLUMN comments TEXT`);
+addColumnIfMissing(`ALTER TABLE listings ADD COLUMN unavailable INTEGER NOT NULL DEFAULT 0`);
 
 export interface Listing {
   id: number;
@@ -48,6 +50,7 @@ export interface Listing {
   bathrooms: number | null;
   comments: string | null;
   rank: number;
+  unavailable: number;
   created_at: number;
 }
 
@@ -70,6 +73,7 @@ export interface ListingUpdate {
   bedrooms?: number | null;
   bathrooms?: number | null;
   comments?: string | null;
+  unavailable?: boolean;
 }
 
 const insertStmt = db.prepare(`
@@ -84,10 +88,13 @@ const updateStmt = db.prepare(`
       city = @city,
       bedrooms = @bedrooms,
       bathrooms = @bathrooms,
-      comments = @comments
+      comments = @comments,
+      unavailable = @unavailable
   WHERE id = @id
 `);
-const selectAllStmt = db.prepare(`SELECT * FROM listings ORDER BY "rank" DESC, created_at DESC`);
+const selectAllStmt = db.prepare(
+  `SELECT * FROM listings ORDER BY unavailable ASC, "rank" DESC, created_at DESC`
+);
 const selectByIdStmt = db.prepare(`SELECT * FROM listings WHERE id = ?`);
 const deleteStmt = db.prepare(`DELETE FROM listings WHERE id = ?`);
 const maxRankStmt = db.prepare(`SELECT COALESCE(MAX("rank"), 0) AS m FROM listings`);
@@ -132,6 +139,8 @@ export function updateListing(id: number, fields: ListingUpdate): Listing | null
     bedrooms: fields.bedrooms !== undefined ? fields.bedrooms : existing.bedrooms,
     bathrooms: fields.bathrooms !== undefined ? fields.bathrooms : existing.bathrooms,
     comments: fields.comments !== undefined ? fields.comments : existing.comments,
+    unavailable:
+      fields.unavailable !== undefined ? (fields.unavailable ? 1 : 0) : existing.unavailable,
   });
   return selectByIdStmt.get(id) as Listing;
 }
